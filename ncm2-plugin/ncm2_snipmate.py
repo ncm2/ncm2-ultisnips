@@ -10,6 +10,13 @@ def wrap():
         txt = txt.replace('`', r'\`')
         return txt
 
+    def snipmate_placeholder(num, txt=''):
+        if txt:
+            # : doesn't work in placeholder
+            txt = snipmate_escape(txt)
+            return '${%s:%s}'  % (num, txt)
+        else:
+            return '${%s}'  % (num)
 
     def to_snipmate(ast):
         txt = ''
@@ -27,6 +34,7 @@ def wrap():
     from ncm2 import getLogger
     import vim
     from ncm2_lsp_snippet.parser import Parser
+    import re
 
     logger = getLogger(__name__)
 
@@ -41,8 +49,32 @@ def wrap():
     def formalize(ctx, item):
         item = old_formalize(ctx, item)
         ud = item['user_data']
+
         if not ud.get('is_snippet', None) or not ud.get('snippet', None):
+
+            if ud.get('is_snippet', None):
+                return
+
+            w = item['word']
+            m = re.search(re.escape(w) + r'\s*\((.*)\)', item['menu'])
+            if not m:
+                return item
+
+            # hacky
+            # convert it into snippet
+            args = m.group(1)
+            snippet = snipmate_escape(w + '(')
+            for idx, arg in enumerate(args.split(',')):
+                if idx > 0:
+                    snippet += snipmate_placeholder(idx+1, ','+arg)
+                else:
+                    snippet += snipmate_placeholder(idx+1, arg)
+            snippet += snipmate_escape(')') + snipmate_placeholder(0)
+            ud['snipmate_snippet'] = snippet
+            ud['is_snippet'] = 1
+            ud['ncm2_snipmate_auto'] = 1
             return item
+
         try:
             ast = parser.get_ast(ud['snippet'])
             snipmate = to_snipmate(ast)
@@ -76,7 +108,10 @@ def wrap():
             if ud.get('is_snippet', False):
                 # [+] sign indicates that this completion item is
                 # expandable
-                m['menu'] = '[+] ' + m['menu']
+                if ud.get('ncm2_snipmate_auto', False):
+                    m['menu'] = '|+| ' + m['menu']
+                else:
+                    m['menu'] = '[+] ' + m['menu']
             else:
                 m['menu'] = '[ ] ' + m['menu']
 

@@ -3,6 +3,8 @@ if get(s:, 'loaded', 0)
 endif
 let s:loaded = 1
 
+let s:completed = {}
+
 func! ncm2_snipmate#expand_or(or_key)
     if !pumvisible()
         return a:or_key
@@ -15,10 +17,9 @@ imap <expr> <Plug>(_ncm2_snipmate) ncm2_snipmate#_do_expand_or()
 
 func! ncm2_snipmate#_do_expand_or()
     if ncm2_snipmate#completed_is_snippet()
-        echom "snippet trigger"
+        let s:completed = v:completed_item
         return  "\<Plug>snipMateTrigger"
     endif
-    echom "snippet not trigger"
     return s:or_key
 endfunc
 
@@ -34,22 +35,22 @@ func! ncm2_snipmate#completed_is_snippet()
 endfunc
 
 func! ncm2_snipmate#_snippets(scopes, trigger, result)
-	if empty(v:completed_item)
+	if empty(s:completed)
 		return
 	endif
-    if get(v:completed_item, 'user_data', '') == ''
+    if get(s:completed, 'user_data', '') == ''
         return
     endif
     try
-        let ud = json_decode(v:completed_item.user_data)
+        let ud = json_decode(s:completed.user_data)
         if ud.is_snippet && ud.snipmate_snippet != ''
             " use version 1 snippet syntax
-            let word = v:completed_item.word
+            let word = s:completed.word
             let a:result[word] = {'default': [ud.snipmate_snippet, 1]}
         endif
     catch
         echom 'ncm2_snipmate failed feeding snippet data: ' .
-                \ v:completed_item.user_data . ', ' . 
+                \ s:completed.user_data . ', ' . 
                 \ v:exception
     endtry
 endfunc
