@@ -7,6 +7,7 @@ def wrap():
         txt = txt.replace('{', r'\{')
         txt = txt.replace('}', r'\}')
         txt = txt.replace(':', r'\:')
+        txt = txt.replace('`', r'\`')
         return txt
 
 
