@@ -26,16 +26,11 @@ func! ncm2_snipmate#completed_is_snippet()
 	if empty(v:completed_item)
 		return 0
 	endif
-    if get(v:completed_item, 'user_data', '') == ''
+    silent! let ud = json_decode(v:completed_item.user_data)
+    if empty(ud) || type(ud) != v:t_dict
         return 0
     endif
-    
-    try
-        let ud = json_decode(v:completed_item.user_data)
-        return get(ud, 'is_snippet', 0)
-    catch
-        return 0
-    endtry
+    return get(ud, 'is_snippet', 0)
 endfunc
 
 func! ncm2_snipmate#_snippets(scopes, trigger, result)
@@ -47,10 +42,10 @@ func! ncm2_snipmate#_snippets(scopes, trigger, result)
     endif
     try
         let ud = json_decode(v:completed_item.user_data)
-        if ud.is_snippet && ud.snippet != ''
+        if ud.is_snippet && ud.snipmate_snippet != ''
             " use version 1 snippet syntax
             let word = v:completed_item.word
-            let a:result[word] = {'default': [ud.snippet, 1]}
+            let a:result[word] = {'default': [ud.snipmate_snippet, 1]}
         endif
     catch
         echom 'ncm2_snipmate failed feeding snippet data: ' .
@@ -58,6 +53,8 @@ func! ncm2_snipmate#_snippets(scopes, trigger, result)
                 \ v:exception
     endtry
 endfunc
+
+" completion source
 
 let g:ncm2_snipmate#source = get(g:, 'ncm2_snipmate#source', {
             \ 'name': 'snipmate',
@@ -72,6 +69,7 @@ let g:ncm2_snipmate#source = extend(g:ncm2_snipmate#source,
 
 func! ncm2_snipmate#init()
     call ncm2#register_source(g:ncm2_snipmate#source)
+    let g:snipMateSources.ncm = funcref#Function('ncm2_snipmate#_snippets')
 endfunc
 
 func! ncm2_snipmate#on_complete(ctx)
