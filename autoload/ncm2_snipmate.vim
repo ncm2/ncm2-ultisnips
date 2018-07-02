@@ -1,3 +1,7 @@
+if get(s:, 'loaded', 0)
+    finish
+endif
+let s:loaded = 1
 
 func! ncm2_snipmate#expand_or(or_key)
     if !pumvisible()
@@ -28,7 +32,7 @@ func! ncm2_snipmate#completed_is_snippet()
     
     try
         let ud = json_decode(v:completed_item.user_data)
-        return ud.is_snippet
+        return get(ud, 'is_snippet', 0)
     catch
         return 0
     endtry
@@ -53,4 +57,27 @@ func! ncm2_snipmate#_snippets(scopes, trigger, result)
                 \ v:completed_item.user_data . ', ' . 
                 \ v:exception
     endtry
+endfunc
+
+let g:ncm2_snipmate#source = get(g:, 'ncm2_snipmate#source', {
+            \ 'name': 'snipmate',
+            \ 'priority': 7,
+            \ 'mark': '',
+            \ 'on_complete': 'ncm2_snipmate#on_complete',
+            \ })
+
+let g:ncm2_snipmate#source = extend(g:ncm2_snipmate#source,
+            \ get(g:, 'ncm2_snipmate#source_override', {}),
+            \ 'force')
+
+func! ncm2_snipmate#init()
+    call ncm2#register_source(g:ncm2_snipmate#source)
+endfunc
+
+func! ncm2_snipmate#on_complete(ctx)
+	let word    = snipMate#WordBelowCursor()
+	let matches = map(snipMate#GetSnippetsForWordBelowCursorForComplete(''),'extend(v:val,{"dup":1, "user_data": {"is_snippet": 1, "snippet": ""}})')
+    let ccol = a:ctx['ccol']
+    let startccol = a:ctx['ccol'] - strchars(word)
+	call ncm2#complete(a:ctx, startccol, matches)
 endfunc

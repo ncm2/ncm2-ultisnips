@@ -5,6 +5,7 @@ def wrap():
     from ncm2 import getLogger
     import vim
 
+    vim.command('call ncm2_snipmate#init()')
     if not vim.eval("get(g:, 'ncm2_snipmate#completed_expand_enable', 1)"):
         return
 

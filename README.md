@@ -1,6 +1,7 @@
 
-A small tool to help trigger snippet expansion of ncm2 completion item based
-on [snipMate](https://github.com/msanders/snipmate.vim).
+This plugin contains snippet completion source, and a small tool to help
+trigger snippet expansion of ncm2 completion item based on
+[snipMate](https://github.com/msanders/snipmate.vim).
 
 vimrc config:
 
