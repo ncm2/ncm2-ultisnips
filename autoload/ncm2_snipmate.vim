@@ -43,7 +43,7 @@ func! ncm2_snipmate#_snippets(scopes, trigger, result)
     endif
     try
         let ud = json_decode(v:completed_item.user_data)
-        if ud.is_snippet
+        if ud.is_snippet && ud.snippet != ''
             " use version 1 snippet syntax
             let word = v:completed_item.word
             let a:result[word] = {'default': [ud.snippet, 1]}
