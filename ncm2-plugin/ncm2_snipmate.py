@@ -28,6 +28,10 @@ def wrap():
             elif t == 'placeholder':
                 tab, ph = ele
                 txt += "${%s:%s}" % (tab, to_snipmate(ph))
+            elif t == 'choice':
+                # snipmate doesn't support choices, replace it with placeholder
+                tab, opts = ele
+                txt += "${%s:%s}" % (tab, snipmate_escape(opts[0]))
         return txt
 
     from ncm2_core import ncm2_core
@@ -50,7 +54,20 @@ def wrap():
         item = old_formalize(ctx, item)
         ud = item['user_data']
 
-        if not ud.get('is_snippet', None) or not ud.get('snippet', None):
+        if 'is_snippet' in item and 'is_snippet' not in ud:
+            ud['is_snippet'] = item['is_snippet']
+        if 'snippet' in item and 'snippet' not in ud:
+            ud['snippet'] = item['snippet']
+        if 'is_snippet' not in ud:
+            ud['is_snippet'] = 0
+        if 'snippet' not in ud:
+            ud['snippet'] = ''
+
+        # fix data return from LanguageClient
+        if ud['is_snippet'] and item['word'] == ud['snippet']:
+            item['word'] = item['abbr']
+
+        if not ud['is_snippet'] or not ud['snippet']:
 
             if ud.get('is_snippet', None):
                 return item
