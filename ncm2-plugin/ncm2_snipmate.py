@@ -2,7 +2,7 @@
 
 
 def wrap():
-    def snipmate_escape(txt):
+    def snipmate_text(txt):
         txt = txt.replace('$', r'\$')
         txt = txt.replace('{', r'\{')
         txt = txt.replace('}', r'\}')
@@ -13,7 +13,7 @@ def wrap():
     def snipmate_placeholder(num, txt=''):
         if txt:
             # : doesn't work in placeholder
-            txt = snipmate_escape(txt)
+            txt = snipmate_text(txt)
             return '${%s:%s}'  % (num, txt)
         else:
             return '${%s}'  % (num)
@@ -22,7 +22,7 @@ def wrap():
         txt = ''
         for t, ele in ast:
             if t == 'text':
-                txt += snipmate_escape(ele)
+                txt += snipmate_text(ele)
             elif t == 'tabstop':
                 txt += "${%s}" % ele
             elif t == 'placeholder':
@@ -31,7 +31,7 @@ def wrap():
             elif t == 'choice':
                 # snipmate doesn't support choices, replace it with placeholder
                 tab, opts = ele
-                txt += "${%s:%s}" % (tab, snipmate_escape(opts[0]))
+                txt += "${%s:%s}" % (tab, snipmate_text(opts[0]))
         return txt
 
     from ncm2_core import ncm2_core
@@ -83,13 +83,13 @@ def wrap():
             # hacky
             # convert it into snippet
             args = m.group(1)
-            snippet = snipmate_escape(w + '(')
+            snippet = snipmate_text(w + '(')
             for idx, arg in enumerate(args.split(',')):
                 if idx > 0:
-                    snippet += snipmate_placeholder(idx+1, ','+arg)
-                else:
-                    snippet += snipmate_placeholder(idx+1, arg)
-            snippet += snipmate_escape(')') + snipmate_placeholder(0)
+                    snippet += snipmate_text(', ')
+
+                snippet += snipmate_placeholder(idx+1, arg)
+            snippet += snipmate_text(')') + snipmate_placeholder(0)
             ud['snipmate_snippet'] = snippet
             ud['is_snippet'] = 1
             ud['ncm2_snipmate_auto'] = 1
