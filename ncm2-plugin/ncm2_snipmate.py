@@ -53,11 +53,14 @@ def wrap():
         if not ud.get('is_snippet', None) or not ud.get('snippet', None):
 
             if ud.get('is_snippet', None):
-                return
+                return item
 
             w = item['word']
             m = re.search(re.escape(w) + r'\s*\((.*)\)', item['menu'])
             if not m:
+                return item
+
+            if not ctx.get('menu_snippet', False):
                 return item
 
             # hacky
