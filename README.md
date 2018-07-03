@@ -1,9 +1,24 @@
+[snipMate](https://github.com/msanders/snipmate.vim) integration for
+[ncm2](https://github.com/ncm2/ncm2).
 
-This plugin contains snippet completion source, and a small tool to help
-trigger snippet expansion of ncm2 completion item based on
-[snipMate](https://github.com/msanders/snipmate.vim).
+## Features
 
-vimrc config:
+- snippet completion source
+- trigger dynamic snippet of completed item, e.g. parameter expansion.
+
+## Install
+
+```vim
+" based on snipmate
+Plug 'ncm2/ncm2-snipmate'
+
+" snipmate dependencies
+Plug 'tomtom/tlib_vim'
+Plug 'marcweber/vim-addon-mw-utils'
+Plug 'garbas/vim-snipmate'
+```
+
+## Vimrc Example
 
 ```vim
 " press enter key to trigger snippet expansion
