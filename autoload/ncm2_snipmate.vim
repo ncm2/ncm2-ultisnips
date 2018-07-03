@@ -80,3 +80,10 @@ func! ncm2_snipmate#on_complete(ctx)
     let startccol = a:ctx['ccol'] - strchars(word)
 	call ncm2#complete(a:ctx, startccol, matches)
 endfunc
+
+" FIXME snipmate somehow don't play well when LanguageClient-neovim is auto
+" applying text edits in
+"    autocmd CompleteDone * call LanguageClient#handleCompleteDone()
+augroup languageClient
+    autocmd! CompleteDone
+augroup END
