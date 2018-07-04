@@ -22,7 +22,7 @@ Plug 'garbas/vim-snipmate'
 
 ```vim
 " Press enter key to trigger snippet expansion
-" The parameters are the some as `:help feedkeys()`
+" The parameters are the same as `:help feedkeys()`
 inoremap <silent> <expr> <CR> ncm2_snipmate#expand_or("\<CR>", 'n')
 
 " c-j c-k for moving in snippet
