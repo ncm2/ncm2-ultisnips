@@ -5,22 +5,23 @@ let s:loaded = 1
 
 let s:completed = {}
 
-func! ncm2_snipmate#expand_or(or_key)
+func! ncm2_snipmate#expand_or(...)
     if !pumvisible()
-        return a:or_key
+        call call('feedkeys', a:000)
+        return ''
     endif
-    let s:or_key = a:or_key
-    return "\<c-y>\<Plug>(_ncm2_snipmate)"
+    let s:or_key = a:000
+    return "\<c-y>\<c-r>=ncm2_snipmate#_do_expand_or()\<cr>"
 endfunc
-
-imap <expr> <Plug>(_ncm2_snipmate) ncm2_snipmate#_do_expand_or()
 
 func! ncm2_snipmate#_do_expand_or()
     if ncm2_snipmate#completed_is_snippet()
         let s:completed = v:completed_item
-        return  "\<Plug>snipMateTrigger"
+        call feedkeys("\<Plug>snipMateTrigger")
+        return ''
     endif
-    return s:or_key
+    call call('feedkeys', s:or_key)
+    return ''
 endfunc
 
 func! ncm2_snipmate#completed_is_snippet()
