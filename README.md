@@ -21,7 +21,7 @@ Plug 'garbas/vim-snipmate'
 ## Vimrc Example
 
 ```vim
-" press enter key to trigger snippet expansion
+" Press enter key to trigger snippet expansion
 " The parameters are the some as `:help feedkeys()`
 inoremap <silent> <expr> <CR> ncm2_snipmate#expand_or("\<CR>", 'n')
 
@@ -30,7 +30,7 @@ let g:snips_no_mappings = 1
 vmap <c-j> <Plug>snipMateNextOrTrigger
 vmap <c-k> <Plug>snipMateBack
 imap <expr> <c-k> pumvisible() ? "\<c-y>\<Plug>snipMateBack" : "\<Plug>snipMateBack"
-imap <expr> <c-k> pumvisible() ? "\<c-y>\<Plug>snipMateNextOrTrigger" : "\<Plug>snipMateNextOrTrigger"
+imap <expr> <c-j> pumvisible() ? "\<c-y>\<Plug>snipMateNextOrTrigger" : "\<Plug>snipMateNextOrTrigger"
 ```
 
 `:help snipMate` for more information on using snipMate.
