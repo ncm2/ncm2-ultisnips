@@ -1,4 +1,4 @@
-[snipMate](https://github.com/msanders/snipmate.vim) integration for
+[UltiSnips](https://github.com/SirVer/ultisnips) integration for
 [ncm2](https://github.com/ncm2/ncm2).
 
 ## Features
@@ -9,13 +9,9 @@
 ## Install
 
 ```vim
-" based on snipmate
-Plug 'ncm2/ncm2-snipmate'
-
-" snipmate dependencies
-Plug 'tomtom/tlib_vim'
-Plug 'marcweber/vim-addon-mw-utils'
-Plug 'garbas/vim-snipmate'
+" based on ultisnips
+Plug 'ncm2/ncm2-ultisnips'
+Plug 'SirVer/ultisnips'
 ```
 
 ## Vimrc Example
@@ -23,14 +19,14 @@ Plug 'garbas/vim-snipmate'
 ```vim
 " Press enter key to trigger snippet expansion
 " The parameters are the same as `:help feedkeys()`
-inoremap <silent> <expr> <CR> ncm2_snipmate#expand_or("\<CR>", 'n')
+inoremap <silent> <expr> <CR> ncm2_ultisnips#expand_or("\<CR>", 'n')
 
 " c-j c-k for moving in snippet
-let g:snips_no_mappings = 1
-vmap <c-j> <Plug>snipMateNextOrTrigger
-vmap <c-k> <Plug>snipMateBack
-imap <expr> <c-k> pumvisible() ? "\<c-y>\<Plug>snipMateBack" : "\<Plug>snipMateBack"
-imap <expr> <c-j> pumvisible() ? "\<c-y>\<Plug>snipMateNextOrTrigger" : "\<Plug>snipMateNextOrTrigger"
+inoremap <expr> <CR> ncm2_ultisnips#expand_or("\<CR>", 'n')
+" let g:UltiSnipsExpandTrigger		= "<Plug>(ultisnips_expand)"
+let g:UltiSnipsJumpForwardTrigger	= "<c-j>"
+let g:UltiSnipsJumpBackwardTrigger	= "<c-k>"
+let g:UltiSnipsRemoveSelectModeMappings = 0
 ```
 
-`:help snipMate` for more information on using snipMate.
+`:help UltiSnips` for more information on using UltiSnips.

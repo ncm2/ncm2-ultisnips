@@ -2,36 +2,36 @@
 
 
 def wrap():
-    def snipmate_text(txt):
+    def ultisnips_text(txt):
         txt = txt.replace('$', r'\$')
         txt = txt.replace('{', r'\{')
         txt = txt.replace('}', r'\}')
-        txt = txt.replace(':', r'\:')
         txt = txt.replace('`', r'\`')
+        txt = txt.replace('\\', '\\\\')
         return txt
 
-    def snipmate_placeholder(num, txt=''):
+    def ultisnips_placeholder(num, txt=''):
         if txt:
             # : doesn't work in placeholder
-            txt = snipmate_text(txt)
+            txt = ultisnips_text(txt)
             return '${%s:%s}'  % (num, txt)
         else:
             return '${%s}'  % (num)
 
-    def to_snipmate(ast):
+    def to_ultisnips(ast):
         txt = ''
         for t, ele in ast:
             if t == 'text':
-                txt += snipmate_text(ele)
+                txt += ultisnips_text(ele)
             elif t == 'tabstop':
                 txt += "${%s}" % ele
             elif t == 'placeholder':
                 tab, ph = ele
-                txt += "${%s:%s}" % (tab, to_snipmate(ph))
+                txt += "${%s:%s}" % (tab, to_ultisnips(ph))
             elif t == 'choice':
-                # snipmate doesn't support choices, replace it with placeholder
+                # ultisnips doesn't support choices, replace it with placeholder
                 tab, opts = ele
-                txt += "${%s:%s}" % (tab, snipmate_text(opts[0]))
+                txt += "${%s:%s}" % (tab, ultisnips_text(opts[0]))
         return txt
 
     from ncm2_core import ncm2_core
@@ -42,14 +42,14 @@ def wrap():
 
     logger = getLogger(__name__)
 
-    vim.command('call ncm2_snipmate#init()')
+    vim.command('call ncm2_ultisnips#init()')
 
     old_formalize = ncm2_core.match_formalize
     old_decorate = ncm2_core.matches_decorate
 
     parser = Parser()
 
-    # convert lsp snippet into snipmate snippet
+    # convert lsp snippet into ultisnips snippet
     def formalize(ctx, item):
         item = old_formalize(ctx, item)
         ud = item['user_data']
@@ -62,6 +62,8 @@ def wrap():
             ud['is_snippet'] = 0
         if 'snippet' not in ud:
             ud['snippet'] = ''
+        if 'snippet_word' not in ud:
+            ud['snippet_word'] = item['word']
 
         # fix data return from LanguageClient
         if ud['is_snippet'] and item['word'] == ud['snippet']:
@@ -83,23 +85,23 @@ def wrap():
             # hacky
             # convert it into snippet
             args = m.group(1)
-            snippet = snipmate_text(w + '(')
+            snippet = ultisnips_text(w + '(')
             for idx, arg in enumerate(args.split(',')):
                 if idx > 0:
-                    snippet += snipmate_text(', ')
+                    snippet += ultisnips_text(', ')
 
-                snippet += snipmate_placeholder(idx+1, arg)
-            snippet += snipmate_text(')') + snipmate_placeholder(0)
-            ud['snipmate_snippet'] = snippet
+                snippet += ultisnips_placeholder(idx+1, arg)
+            snippet += ultisnips_text(')') + ultisnips_placeholder(0)
+            ud['ultisnips_snippet'] = snippet
             ud['is_snippet'] = 1
-            ud['ncm2_snipmate_auto'] = 1
+            ud['ncm2_ultisnips_auto'] = 1
             return item
 
         try:
             ast = parser.get_ast(ud['snippet'])
-            snipmate = to_snipmate(ast)
-            if snipmate:
-                ud['snipmate_snippet'] = snipmate
+            ultisnips = to_ultisnips(ast)
+            if ultisnips:
+                ud['ultisnips_snippet'] = ultisnips
                 ud['is_snippet'] = 1
             else:
                 ud['is_snippet'] = 0
@@ -128,8 +130,8 @@ def wrap():
             if ud.get('is_snippet', False):
                 # [+] sign indicates that this completion item is
                 # expandable
-                if ud.get('ncm2_snipmate_auto', False):
-                    m['menu'] = '|+| ' + m['menu']
+                if ud.get('ncm2_ultisnips_auto', False):
+                    m['menu'] = '(+) ' + m['menu']
                 else:
                     m['menu'] = '[+] ' + m['menu']
             else:
