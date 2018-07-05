@@ -6,6 +6,10 @@
 - snippet completion source
 - trigger dynamic snippet of completed item, e.g. parameter expansion.
 
+## Reaurements
+
+- `user_data` found in vim8/nvim's documentation `:help complete-item`
+
 ## Install
 
 ```vim
