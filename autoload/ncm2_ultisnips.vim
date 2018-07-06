@@ -30,12 +30,19 @@ func! ncm2_ultisnips#_do_expand_or()
             call UltiSnips#AddSnippetWithPriority(w, snippet, '', 'i', s:ulft, 1)
         endif
 
-        call feedkeys("\<Plug>(ncm2_ultisnips_expand)", "m")
+        call feedkeys("\<Plug>(ncm2_ultisnips_expand)", "im")
         return ''
     endif
     call call('feedkeys', s:or_key)
     return ''
 endfunc
+
+if !has("patch-8.0.1493")
+    func! ncm2_ultisnips#_do_expand_or()
+        call call('feedkeys', s:or_key)
+        return ''
+    endfunc
+endif
 
 func! ncm2_ultisnips#completed_is_snippet()
 	if empty(v:completed_item)
@@ -80,8 +87,15 @@ func! ncm2_ultisnips#on_warmup(ctx)
         return
     endif
     let b:ncm2_ultisnips_setup = 1
-    call UltiSnips#AddFiletypes(s:ulft)
-    autocmd InsertLeave <buffer> exec g:_uspy s:ulcmd
+    if has("patch-8.0.1493")
+        call UltiSnips#AddFiletypes(s:ulft)
+        autocmd InsertLeave <buffer> exec g:_uspy s:ulcmd
+    else
+        echohl ErrorMsg
+        echom 'ncm2-ultisnips requires has("patch-8.0.1493")'
+            \  ' https://github.com/neovim/neovim/pull/8003'
+        echohl None
+    endif
 endfunc
 
 func! ncm2_ultisnips#on_complete(ctx)
