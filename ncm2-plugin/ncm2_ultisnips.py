@@ -62,12 +62,13 @@ def wrap():
             ud['is_snippet'] = 0
         if 'snippet' not in ud:
             ud['snippet'] = ''
-        if 'snippet_word' not in ud:
-            ud['snippet_word'] = item['word']
 
         # fix data return from LanguageClient
         if ud['is_snippet'] and item['word'] == ud['snippet']:
             item['word'] = item['abbr']
+
+        if 'snippet_word' not in ud:
+            ud['snippet_word'] = item['word']
 
         if not ud['is_snippet'] or not ud['snippet']:
 
