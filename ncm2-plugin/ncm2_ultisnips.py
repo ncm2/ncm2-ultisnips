@@ -3,11 +3,11 @@
 
 def wrap():
     def ultisnips_text(txt):
+        txt = txt.replace('\\', '\\\\')
         txt = txt.replace('$', r'\$')
         txt = txt.replace('{', r'\{')
         txt = txt.replace('}', r'\}')
         txt = txt.replace('`', r'\`')
-        txt = txt.replace('\\', '\\\\')
         return txt
 
     def ultisnips_placeholder(num, txt=''):
