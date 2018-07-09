@@ -1,6 +1,8 @@
 [UltiSnips](https://github.com/SirVer/ultisnips) integration for
 [ncm2](https://github.com/ncm2/ncm2).
 
+![rec](https://user-images.githubusercontent.com/4538941/42503042-2b7da088-846a-11e8-837d-17432a444d97.gif)
+
 ## Features
 
 - snippet completion source
