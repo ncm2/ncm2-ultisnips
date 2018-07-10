@@ -19,17 +19,7 @@ endfunc
 
 func! ncm2_ultisnips#_do_expand_or()
     if ncm2_ultisnips#completed_is_snippet()
-
-        exec g:_uspy 'UltiSnips_Manager._added_snippets_source._snippets["ncm"]._snippets = []'
-
-        let ud = json_decode(v:completed_item.user_data)
-        if has_key(ud, 'ultisnips_snippet')
-            let w = ud.snippet_word
-            let snippet = ud.ultisnips_snippet
-
-            call UltiSnips#AddSnippetWithPriority(w, snippet, '', 'i', s:ulft, 1)
-        endif
-
+        call ncm2_ultisnips#inject_completed_snippet()
         call feedkeys("\<Plug>(ncm2_ultisnips_expand)", "im")
         return ''
     endif
@@ -54,6 +44,23 @@ func! ncm2_ultisnips#completed_is_snippet()
     endif
     return get(ud, 'is_snippet', 0)
 endfunc
+
+func! ncm2_ultisnips#inject_completed_snippet()
+    exec g:_uspy 'UltiSnips_Manager._added_snippets_source._snippets["ncm"]._snippets = []'
+
+    let ud = json_decode(v:completed_item.user_data)
+    if has_key(ud, 'ultisnips_snippet')
+        let w = ud.snippet_word
+        let snippet = ud.ultisnips_snippet
+
+        call UltiSnips#AddSnippetWithPriority(w, snippet, '', 'i', s:ulft, 1)
+    endif
+endfunc
+
+func! ncm2_ultisnips#cleanup_injected_snippet()
+    exec g:_uspy s:ulcmd
+endfunc
+
 
 " completion source
 
@@ -89,7 +96,7 @@ func! ncm2_ultisnips#on_warmup(ctx)
     let b:ncm2_ultisnips_setup = 1
     if has("patch-8.0.1493")
         call UltiSnips#AddFiletypes(s:ulft)
-        autocmd InsertLeave <buffer> exec g:_uspy s:ulcmd
+        autocmd InsertLeave <buffer> call ncm2_ultisnips#cleanup_injected_snippet()
     else
         echohl ErrorMsg
         echom 'ncm2-ultisnips requires has("patch-8.0.1493")'
