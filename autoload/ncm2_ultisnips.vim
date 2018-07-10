@@ -54,7 +54,9 @@ func! ncm2_ultisnips#inject_completed_snippet()
         let snippet = ud.ultisnips_snippet
 
         call UltiSnips#AddSnippetWithPriority(w, snippet, '', 'i', s:ulft, 1)
+        return 1
     endif
+    return 0
 endfunc
 
 func! ncm2_ultisnips#cleanup_injected_snippet()

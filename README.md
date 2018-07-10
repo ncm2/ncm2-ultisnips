@@ -35,3 +35,17 @@ let g:UltiSnipsRemoveSelectModeMappings = 0
 ```
 
 `:help UltiSnips` for more information on using UltiSnips.
+
+## API
+
+If you need more control over the completed item's snippet expansion, you
+might need these to API to help program your key mapping.
+
+`ncm2_ultisnips#completed_is_snippet()`
+
+This function checks whether the v:completed_item is also a snippet.
+
+`ncm2_ultisnips#inject_completed_snippet()`
+
+This function injects `v:completed_item` snippet into ultisnips, so that it
+will be expanded by ultisnips's trigger.
