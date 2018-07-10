@@ -14,7 +14,7 @@ choice_pat = re.compile(r'^\$\{(\d+)\|(.*?[^\\])?\|\}')
 
 class Parser:
 
-    def get_elements(self, s, pos, escs=['$', '\\']):
+    def get_elements(self, s, pos, escs=['$', '\\'], loose_escs=['}']):
         elements = []
         while True:
             if len(s) == pos:
@@ -39,7 +39,7 @@ class Parser:
                 elements += ele
                 pos = end
                 continue
-            ele, end = self.get_text(s, pos, escs)
+            ele, end = self.get_text(s, pos, escs, loose_escs)
             if ele is None:
                 pos = end
                 break
@@ -49,13 +49,13 @@ class Parser:
             return None, pos
         return elements, pos
 
-    def get_text(self, s, pos, escs=['$', '}', '\\']):
+    def get_text(self, s, pos, escs, loose_escs = []):
         s = s[pos:]
         ele = ''
         end = pos
         while len(s):
             esc = s[:2]
-            if esc in ['\\'+e for e in escs]:
+            if esc in ['\\'+e for e in escs + loose_escs]:
                 ele += s[1]
                 end += 2
                 s = s[2:]
@@ -88,7 +88,7 @@ class Parser:
         # valid placeholder
         if m.group(2) == '':
             return [tab, ["text", ""]], pos + m.end()
-        subeles, pos = self.get_elements(s, pos + m.start(2), escs=['$', '}', '\\'])
+        subeles, pos = self.get_elements(s, pos + m.start(2), escs=['$', '}', '\\'], loose_escs = [])
         if pos == len(s) or s[pos] != '}':
             self.invalid_near(s, pos, "expecting '}' character")
         return [tab, subeles], pos + 1
