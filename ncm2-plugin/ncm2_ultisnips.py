@@ -38,6 +38,7 @@ def wrap():
     from ncm2 import getLogger
     import vim
     from ncm2_lsp_snippet.parser import Parser
+    import ncm2_lsp_snippet.utils as lsp_utils
     import re
 
     logger = getLogger(__name__)
@@ -52,52 +53,10 @@ def wrap():
     # convert lsp snippet into ultisnips snippet
     def formalize(ctx, item):
         item = old_formalize(ctx, item)
+        item = lsp_utils.match_formalize(ctx, item)
         ud = item['user_data']
-
-        if 'is_snippet' in item and 'is_snippet' not in ud:
-            ud['is_snippet'] = item['is_snippet']
-        if 'snippet' in item and 'snippet' not in ud:
-            ud['snippet'] = item['snippet']
-        if 'is_snippet' not in ud:
-            ud['is_snippet'] = 0
-        if 'snippet' not in ud:
-            ud['snippet'] = ''
-
-        # fix data return from LanguageClient
-        if ud['is_snippet'] and item['word'] == ud['snippet']:
-            item['word'] = item['abbr']
-
-        if 'snippet_word' not in ud:
-            ud['snippet_word'] = item['word']
-
-        if not ud['is_snippet'] or not ud['snippet']:
-
-            if ud.get('is_snippet', None):
-                return item
-
-            w = item['word']
-            m = re.search(re.escape(w) + r'\s*\((.*)\)', item['menu'])
-            if not m:
-                return item
-
-            if not ctx.get('menu_snippet', False):
-                return item
-
-            # hacky
-            # convert it into snippet
-            args = m.group(1)
-            snippet = ultisnips_text(w + '(')
-            for idx, arg in enumerate(args.split(',')):
-                if idx > 0:
-                    snippet += ultisnips_text(', ')
-
-                snippet += ultisnips_placeholder(idx+1, arg)
-            snippet += ultisnips_text(')') + ultisnips_placeholder(0)
-            ud['ultisnips_snippet'] = snippet
-            ud['is_snippet'] = 1
-            ud['ncm2_ultisnips_auto'] = 1
+        if not ud['is_snippet']:
             return item
-
         try:
             ast = parser.get_ast(ud['snippet'])
             ultisnips = to_ultisnips(ast)
