@@ -39,7 +39,7 @@ let g:UltiSnipsRemoveSelectModeMappings = 0
 ## API
 
 If you need more control over the completed item's snippet expansion, you
-might need these to API to help program your key mapping.
+might need these two APIs to help program your key mapping.
 
 `ncm2_ultisnips#completed_is_snippet()`
 
