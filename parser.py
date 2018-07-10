@@ -14,7 +14,7 @@ choice_pat = re.compile(r'^\$\{(\d+)\|(.*?[^\\])?\|\}')
 
 class Parser:
 
-    def get_elements(self, s, pos):
+    def get_elements(self, s, pos, escs=['$', '\\']):
         elements = []
         while True:
             if len(s) == pos:
@@ -39,7 +39,7 @@ class Parser:
                 elements += ele
                 pos = end
                 continue
-            ele, end = self.get_text(s, pos)
+            ele, end = self.get_text(s, pos, escs)
             if ele is None:
                 pos = end
                 break
@@ -88,7 +88,7 @@ class Parser:
         # valid placeholder
         if m.group(2) == '':
             return [tab, ["text", ""]], pos + m.end()
-        subeles, pos = self.get_elements(s, pos + m.start(2))
+        subeles, pos = self.get_elements(s, pos + m.start(2), escs=['$', '}', '\\'])
         if pos == len(s) or s[pos] != '}':
             self.invalid_near(s, pos, "expecting '}' character")
         return [tab, subeles], pos + 1
