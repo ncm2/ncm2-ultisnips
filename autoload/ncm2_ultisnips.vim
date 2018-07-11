@@ -3,10 +3,7 @@ if get(s:, 'loaded', 0)
 endif
 let s:loaded = 1
 
-let s:ulft = 'ncm2'
-let s:ulcmd = 'UltiSnips_Manager._added_snippets_source._snippets["' 
-            \ . s:ulft
-            \ . '"]._snippets = []'
+inoremap <silent> <Plug>(ncm2_ultisnips_expand_completed) <c-r>=ncm2_ultisnips#_do_expand_completed()<cr>
 
 func! ncm2_ultisnips#expand_or(...)
     if !pumvisible()
@@ -19,12 +16,27 @@ endfunc
 
 func! ncm2_ultisnips#_do_expand_or()
     if ncm2_ultisnips#completed_is_snippet()
-        call ncm2_ultisnips#inject_completed_snippet()
-        call feedkeys("\<Plug>(ncm2_ultisnips_expand)", "im")
+        call feedkeys("\<Plug>(ncm2_ultisnips_expand_completed)", "m")
         return ''
     endif
     call call('feedkeys', s:or_key)
     return ''
+endfunc
+
+func! ncm2_ultisnips#_do_expand_completed()
+    if !ncm2_ultisnips#completed_is_snippet()
+        echom "v:completed_item is not a snippet"
+        return ''
+    endif
+    let ud = json_decode(v:completed_item.user_data)
+    if ud.snippet == ''
+        " ultisnips builtin snippet
+        call feedkeys("\<Plug>(_ncm2_ultisnips_expand)", "im")
+        return ''
+    endif
+    let snippet = ud.ultisnips_snippet
+    let trigger = ud.snippet_word
+    return UltiSnips#Anon(snippet, trigger, 'i', 'i')
 endfunc
 
 if !has("patch-8.0.1493")
@@ -45,25 +57,6 @@ func! ncm2_ultisnips#completed_is_snippet()
     return get(ud, 'is_snippet', 0)
 endfunc
 
-func! ncm2_ultisnips#inject_completed_snippet()
-    exec g:_uspy 'UltiSnips_Manager._added_snippets_source._snippets["ncm"]._snippets = []'
-
-    let ud = json_decode(v:completed_item.user_data)
-    if has_key(ud, 'ultisnips_snippet')
-        let w = ud.snippet_word
-        let snippet = ud.ultisnips_snippet
-
-        call UltiSnips#AddSnippetWithPriority(w, snippet, '', 'i', s:ulft, 1)
-        return 1
-    endif
-    return 0
-endfunc
-
-func! ncm2_ultisnips#cleanup_injected_snippet()
-    exec g:_uspy s:ulcmd
-endfunc
-
-
 " completion source
 
 let g:ncm2_ultisnips#source = get(g:, 'ncm2_ultisnips#source', {
@@ -71,7 +64,6 @@ let g:ncm2_ultisnips#source = get(g:, 'ncm2_ultisnips#source', {
             \ 'priority': 7,
             \ 'mark': '',
             \ 'word_pattern': '\S+',
-            \ 'on_warmup': 'ncm2_ultisnips#on_warmup',
             \ 'on_complete': 'ncm2_ultisnips#on_complete',
             \ })
 
@@ -81,7 +73,8 @@ let g:ncm2_ultisnips#source = extend(g:ncm2_ultisnips#source,
 
 func! ncm2_ultisnips#init()
     call ncm2#register_source(g:ncm2_ultisnips#source)
-    exe 'imap' "<Plug>(ncm2_ultisnips_expand)" g:UltiSnipsExpandTrigger
+
+    exec 'imap <Plug>(_ncm2_ultisnips_expand)' g:UltiSnipsExpandTrigger
 
     " FIXME UltiSnips somehow don't play well when LanguageClient-neovim is
     " auto applying text edits in
@@ -89,17 +82,8 @@ func! ncm2_ultisnips#init()
     augroup languageClient
         autocmd! CompleteDone
     augroup END
-endfunc
 
-func! ncm2_ultisnips#on_warmup(ctx)
-    if get(b:, 'ncm2_ultisnips_setup', 0)
-        return
-    endif
-    let b:ncm2_ultisnips_setup = 1
-    if has("patch-8.0.1493")
-        call UltiSnips#AddFiletypes(s:ulft)
-        autocmd InsertLeave <buffer> call ncm2_ultisnips#cleanup_injected_snippet()
-    else
+    if !has("patch-8.0.1493")
         echohl ErrorMsg
         echom 'ncm2-ultisnips requires has("patch-8.0.1493")'
             \  ' https://github.com/neovim/neovim/pull/8003'
