@@ -1,4 +1,50 @@
 
+def apply_additional_text_edits(completed):
+    import vim
+    import json
+    if type(completed) is str:
+        completed = json.loads(completed)
+    ud = completed['user_data']
+    additional_text_edits = ud.get('additional_text_edits', None)
+    completion_item = ud.get('completion_item', {})
+    data = completion_item.get('data', None)
+
+    if not additional_text_edits and data:
+        resolved = vim.call('LanguageClient_runSync', 'LanguageClient#completionItem_resolve', completion_item)
+        vim.vars['completed'] = completed
+        vim.vars['completion_item'] = completion_item
+        vim.vars['resolved'] = resolved
+        additional_text_edits = resolved.get('additionalTextEdits', None)
+
+    if not additional_text_edits:
+        return
+
+    additional_text_edits.sort(key=lambda e: [- e['range']['start']['line'], - e['range']['start']['character']])
+
+    buf = vim.current.buffer
+    for edit in additional_text_edits:
+        start = edit['range']['start']
+        end = edit['range']['end']
+        new_text = edit['newText']
+        lines = buf[start['line']: end['line'] + 1]
+        prefix = lines[0][: start['character']]
+        postfix = lines[-1][end['character']: ]
+        new_text = prefix + new_text + postfix
+        vim.vars['new_text'] = new_text.split("\n")
+        buf[start['line']: end['line'] + 1] = new_text.split("\n")
+
+        # this is super stupid but I'm not sure there's a safe escape
+        # function for vim, and I don't want external dependency either
+        vim.vars['_ncm2_lsp_snippet_tmp'] = "auto edit: " + edit['newText']
+        vim.command("echom g:_ncm2_lsp_snippet_tmp")
+        del vim.vars['_ncm2_lsp_snippet_tmp']
+
+def snippet_escape_text(txt):
+    txt = txt.replace('\\', '\\\\')
+    txt = txt.replace('$', r'\$')
+    txt = txt.replace('}', r'\}')
+    return txt
+
 # convert lsp snippet into snipmate snippet
 def match_formalize(ctx, item):
     ud = item['user_data']
@@ -28,14 +74,10 @@ def match_formalize(ctx, item):
     # fix data pass from LanguageClient
     text_edit = ud.get('text_edit', None)
     if text_edit:
-        # camel case -> underscore
-        if 'new_text' not in text_edit and 'newText' in text_edit:
-            text_edit['new_text'] = text_edit['newText']
-            del text_edit['newText']
         # prefer text_edit
         testart = text_edit['range']['start']
         teend = text_edit['range']['end']
-        new_text = text_edit['new_text']
+        new_text = text_edit['newText']
         if (testart['line'] == lnum - 1 and
             teend['character'] == ccol - 1):
             if is_snippet:
@@ -49,8 +91,15 @@ def match_formalize(ctx, item):
         # is messing with it in CompleteDone
         del ud['text_edit']
 
+    if 'completion_item' in ud:
+        completion_item = ud['completion_item']
+        if 'data' in completion_item:
+            # snippet with additionalTextEdits after resolve
+            if not is_snippet:
+                ud['is_snippet'] = is_snippet = 1
+                ud['snippet'] = snippet_escape_text(item['word'])
+
     if is_snippet and 'snippet_word' not in ud:
         ud['snippet_word'] = item['word']
 
     return item
-
