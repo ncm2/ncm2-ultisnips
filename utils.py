@@ -2,6 +2,8 @@
 # convert lsp snippet into snipmate snippet
 def match_formalize(ctx, item):
     ud = item['user_data']
+    lnum = ctx['lnum']
+    ccol = ctx['ccol']
 
     # fix data pass from LanguageClient
     if 'is_snippet' in item and 'is_snippet' not in ud:
@@ -24,7 +26,6 @@ def match_formalize(ctx, item):
         item['word'] = item['abbr']
 
     # fix data pass from LanguageClient
-    lnum, ccol, startccol = ctx['lnum'], ctx['ccol'], ctx['startccol']
     text_edit = ud.get('text_edit', None)
     if text_edit:
         # camel case -> underscore
@@ -36,12 +37,17 @@ def match_formalize(ctx, item):
         teend = text_edit['range']['end']
         new_text = text_edit['new_text']
         if (testart['line'] == lnum - 1 and
-            testart['character'] == startccol - 1 and
             teend['character'] == ccol - 1):
             if is_snippet:
                 ud['snippet'] = new_text
             else:
-                ud['word'] = new_text
+                item['word'] = new_text
+                item['abbr'] = new_text
+            ud['startccol'] = testart['character'] + 1
+
+        # we don't need text_edit anymore, in case LanguageClient-neovim
+        # is messing with it in CompleteDone
+        del ud['text_edit']
 
     if is_snippet and 'snippet_word' not in ud:
         ud['snippet_word'] = item['word']
