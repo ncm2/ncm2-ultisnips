@@ -28,14 +28,21 @@ func! ncm2_ultisnips#_do_expand_completed()
         echom "v:completed_item is not a snippet"
         return ''
     endif
-    let ud = json_decode(v:completed_item.user_data)
+    let completed = deepcopy(v:completed_item)
+    let ud = json_decode(completed.user_data)
+    let completed.user_data = ud
     if ud.snippet == ''
         " ultisnips builtin snippet
         call feedkeys("\<Plug>(_ncm2_ultisnips_expand)", "im")
         return ''
     endif
+    let &undolevels = &undolevels
+    py3 from ncm2_lsp_snippet.utils import apply_additional_text_edits
+    py3 import vim
+    py3 apply_additional_text_edits(vim.eval('json_encode(l:completed)'))
     let snippet = ud.ultisnips_snippet
     let trigger = ud.snippet_word
+    call feedkeys("\<Plug>(ncm2_skipi_auto_trigger)", "m")
     return UltiSnips#Anon(snippet, trigger, 'i', 'i')
 endfunc
 
