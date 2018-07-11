@@ -33,6 +33,12 @@ def apply_additional_text_edits(completed):
         vim.vars['new_text'] = new_text.split("\n")
         buf[start['line']: end['line'] + 1] = new_text.split("\n")
 
+        # this is super stupid but I'm not sure there's a safe escape
+        # function for vim, and I don't want external dependency either
+        vim.vars['_ncm2_lsp_snippet_tmp'] = "auto edit: " + edit['newText']
+        vim.command("echom g:_ncm2_lsp_snippet_tmp")
+        del vim.vars['_ncm2_lsp_snippet_tmp']
+
 def snippet_escape_text(txt):
     txt = txt.replace('\\', '\\\\')
     txt = txt.replace('$', r'\$')
