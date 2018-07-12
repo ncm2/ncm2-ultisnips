@@ -42,8 +42,9 @@ func! ncm2_ultisnips#_do_expand_completed()
     py3 apply_additional_text_edits(vim.eval('json_encode(l:completed)'))
     let snippet = ud.ultisnips_snippet
     let trigger = ud.snippet_word
-    call feedkeys("\<Plug>(ncm2_skipi_auto_trigger)", "m")
-    return UltiSnips#Anon(snippet, trigger, 'i', 'i')
+    let ret = UltiSnips#Anon(snippet, trigger, 'i', 'i')
+    call feedkeys("\<Plug>(ncm2_skip_auto_trigger)", "m")
+    return ret
 endfunc
 
 if !has("patch-8.0.1493")
