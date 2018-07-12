@@ -69,7 +69,7 @@ endfunc
 let g:ncm2_ultisnips#source = get(g:, 'ncm2_ultisnips#source', {
             \ 'name': 'ultisnips',
             \ 'priority': 7,
-            \ 'mark': '',
+            \ 'mark': 'us',
             \ 'word_pattern': '\S+',
             \ 'on_complete': 'ncm2_ultisnips#on_complete',
             \ })
@@ -100,6 +100,6 @@ endfunc
 
 func! ncm2_ultisnips#on_complete(ctx)
 	let snips = UltiSnips#SnippetsInCurrentScope()
-	let matches = map(keys(snips),'{"word":v:val, "dup":1, "icase":1, "info": l:snips[v:val], "user_data": {"is_snippet": 1}}')
+	let matches = map(keys(snips),'{"word":v:val, "dup":1, "icase":1, "menu": l:snips[v:val], "user_data": {"is_snippet": 1}}')
 	call ncm2#complete(a:ctx, a:ctx['startccol'], matches)
 endfunc
