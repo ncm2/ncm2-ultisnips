@@ -11,9 +11,6 @@ def apply_additional_text_edits(completed):
 
     if not additional_text_edits and data:
         resolved = vim.call('LanguageClient_runSync', 'LanguageClient#completionItem_resolve', completion_item)
-        vim.vars['completed'] = completed
-        vim.vars['completion_item'] = completion_item
-        vim.vars['resolved'] = resolved
         additional_text_edits = resolved.get('additionalTextEdits', None)
 
     if not additional_text_edits:
@@ -30,11 +27,10 @@ def apply_additional_text_edits(completed):
         prefix = lines[0][: start['character']]
         postfix = lines[-1][end['character']: ]
         new_text = prefix + new_text + postfix
-        vim.vars['new_text'] = new_text.split("\n")
         buf[start['line']: end['line'] + 1] = new_text.split("\n")
 
-        # this is super stupid but I'm not sure there's a safe escape
-        # function for vim, and I don't want external dependency either
+        # this is super stupid but I'm not sure there's a safe escape function
+        # for vim, and I don't want external dependency either
         vim.vars['_ncm2_lsp_snippet_tmp'] = "auto edit: " + edit['newText']
         vim.command("echom g:_ncm2_lsp_snippet_tmp")
         del vim.vars['_ncm2_lsp_snippet_tmp']
