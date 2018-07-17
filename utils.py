@@ -10,7 +10,7 @@ def apply_additional_text_edits(completed):
     data = completion_item.get('data', None)
 
     if not additional_text_edits and data:
-        resolved = vim.call('LanguageClient_runSync', 'LanguageClient#completionItem_resolve', completion_item)
+        resolved = vim.call('LanguageClient_runSync', 'LanguageClient#completionItem_resolve', completion_item, {})
         additional_text_edits = resolved.get('additionalTextEdits', None)
 
     if not additional_text_edits:
