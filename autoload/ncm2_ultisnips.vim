@@ -84,13 +84,6 @@ func! ncm2_ultisnips#init()
 
     exec 'imap <Plug>(_ncm2_ultisnips_expand)' g:UltiSnipsExpandTrigger
 
-    " FIXME UltiSnips somehow don't play well when LanguageClient-neovim is
-    " auto applying text edits in
-    "    autocmd CompleteDone * call LanguageClient#handleCompleteDone()
-    augroup languageClient
-        autocmd! CompleteDone
-    augroup END
-
     if !has("patch-8.0.1493")
         echohl ErrorMsg
         echom 'ncm2-ultisnips requires has("patch-8.0.1493")'
