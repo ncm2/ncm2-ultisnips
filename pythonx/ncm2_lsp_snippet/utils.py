@@ -5,18 +5,31 @@ def apply_additional_text_edits(completed):
     if type(completed) is str:
         completed = json.loads(completed)
     ud = completed['user_data']
-    additional_text_edits = ud.get('additional_text_edits', None)
-    completion_item = ud.get('completion_item', {})
-    data = completion_item.get('data', None)
+    lspitem = ud.get('ncm2_lspitem', None)
+    if lspitem:
+        apply_lsp_additional_text_edits(lspitem)
 
+
+def apply_lsp_additional_text_edits(lspitem):
+    import vim
+    import json
+
+    additional_text_edits = lspitem.get('additionalTextEdits', None)
+
+    data = lspitem.get('data', None)
     if not additional_text_edits and data:
-        resolved = vim.call('LanguageClient_runSync', 'LanguageClient#completionItem_resolve', completion_item, {})
+        # for vim8 compatibility
+        vim.vars['_ncm2_lsp_snippet_tmp'] = json.dumps(lspitem)
+        expr = r"json_encode(LanguageClient_runSync('LanguageClient#completionItem_resolve', json_decode(g:_ncm2_lsp_snippet_tmp), {}))"
+        resolved = json.loads(vim.eval(expr))
         additional_text_edits = resolved.get('additionalTextEdits', None)
 
     if not additional_text_edits:
         return
 
-    additional_text_edits.sort(key=lambda e: [- e['range']['start']['line'], - e['range']['start']['character']])
+    additional_text_edits.sort(
+        key=lambda e: [- e['range']['start']['line'],
+                       - e['range']['start']['character']])
 
     buf = vim.current.buffer
     for edit in additional_text_edits:
@@ -25,15 +38,16 @@ def apply_additional_text_edits(completed):
         new_text = edit['newText']
         lines = buf[start['line']: end['line'] + 1]
         prefix = lines[0][: start['character']]
-        postfix = lines[-1][end['character']: ]
+        postfix = lines[-1][end['character']:]
         new_text = prefix + new_text + postfix
         buf[start['line']: end['line'] + 1] = new_text.split("\n")
 
-        # this is super stupid but I'm not sure there's a safe escape function
-        # for vim, and I don't want external dependency either
+        # this is super stupid but I'm not sure there's a safe escape
+        # function for vim, and I don't want external dependency either.
         vim.vars['_ncm2_lsp_snippet_tmp'] = "auto edit: " + edit['newText']
         vim.command("echom g:_ncm2_lsp_snippet_tmp")
         del vim.vars['_ncm2_lsp_snippet_tmp']
+
 
 def snippet_escape_text(txt):
     txt = txt.replace('\\', '\\\\')
@@ -41,61 +55,68 @@ def snippet_escape_text(txt):
     txt = txt.replace('}', r'\}')
     return txt
 
-# convert lsp snippet into snipmate snippet
-def match_formalize(ctx, item):
+
+def match_formalize_from_lspitem(ctx, item, lspitem):
     ud = item['user_data']
-    lnum = ctx['lnum']
-    ccol = ctx['ccol']
+    label = lspitem['label']
+    item['abbr'] = label
 
-    # fix data pass from LanguageClient
-    if 'is_snippet' in item and 'is_snippet' not in ud:
-        ud['is_snippet'] = item['is_snippet']
-    if 'snippet' in item and 'snippet' not in ud:
-        ud['snippet'] = item['snippet']
-    if 'text_edit' in item and 'text_edit' not in ud:
-        ud['text_edit'] = item['text_edit']
+    is_snippet = lspitem.get('insertTextFormat', 1) == 2
+    ud['is_snippet'] = is_snippet
 
-    # default is_snippet
-    if 'is_snippet' not in ud:
-        ud['is_snippet'] = 0
-    if 'snippet' not in ud:
-        ud['snippet'] = ''
+    if 'insertText' in lspitem:
+        item['word'] = ctx['base'] + lspitem['insertText']
+    else:
+        item['word'] = label
 
-    is_snippet = ud['is_snippet']
+    if is_snippet:
+        item['word'] = label
 
-    # fix data pass from LanguageClient, we don't want snippet in word
-    if is_snippet and item['word'] == ud['snippet']:
-        item['word'] = item['abbr']
+    ud['snippet'] = lspitem.get('insertText', label)
 
-    # fix data pass from LanguageClient
-    text_edit = ud.get('text_edit', None)
-    if text_edit:
-        # prefer text_edit
-        testart = text_edit['range']['start']
-        teend = text_edit['range']['end']
-        new_text = text_edit['newText']
+    # prefer text_edit
+    te = lspitem.get('textEdit', None)
+    if te:
+        testart = te['range']['start']
+        teend = te['range']['end']
+        new_text = te['newText']
+        # Note from spec:
+        # *Note:* The range of the edit must be a single line range and
+        # it must contain the position at which completion has been
+        # requested.
         if (testart['line'] == lnum - 1 and
-            teend['character'] == ccol - 1):
+                teend['character'] <= ccol - 1):
             if is_snippet:
                 ud['snippet'] = new_text
             else:
                 item['word'] = new_text
-                item['abbr'] = new_text
             ud['startccol'] = testart['character'] + 1
 
-        # we don't need text_edit anymore, in case LanguageClient-neovim
-        # is messing with it in CompleteDone
-        del ud['text_edit']
+    if 'data' in lspitem:
+        # snippet with additionalTextEdits after resolve
+        ud['is_snippet'] = 1
+        is_snippet = 1
+        if not ud.get('snippet', None):
+            ud['snippet'] = snippet_escape_text(item['word'])
 
-    if 'completion_item' in ud:
-        completion_item = ud['completion_item']
-        if 'data' in completion_item:
-            # snippet with additionalTextEdits after resolve
-            if not is_snippet:
-                ud['is_snippet'] = is_snippet = 1
-                ud['snippet'] = snippet_escape_text(item['word'])
+    # we don't need lspitem anymore, in case LanguageClient-neovim. is
+    # messing with it in CompleteDone
+    if 'lspitem' in ud:
+        ud['ncm2_lspitem'] = ud['lspitem']
+        del ud['lspitem']
 
-    if is_snippet and 'snippet_word' not in ud:
-        ud['snippet_word'] = item['word']
 
+def match_formalize(ctx, item):
+    ud = item['user_data']  # type: dict
+    lnum = ctx['lnum']
+    ccol = ctx['ccol']
+
+    if 'lspitem' in ud:
+        match_formalize_from_lspitem(ctx, item, ud['lspitem'])
+
+    ud.setdefault('snippet', '')
+    is_snippet = ud.setdefault('is_snippet', 0)
+
+    if is_snippet:
+        ud.setdefault('snippet_word', item['word'])
     return item
