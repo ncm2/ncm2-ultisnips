@@ -84,8 +84,8 @@ def match_formalize_from_lspitem(ctx, item, lspitem):
         # *Note:* The range of the edit must be a single line range and
         # it must contain the position at which completion has been
         # requested.
-        if (testart['line'] == lnum - 1 and
-                teend['character'] <= ccol - 1):
+        if (testart['line'] == ctx['lnum'] - 1 and
+                teend['character'] <= ctx['ccol'] - 1):
             if is_snippet:
                 ud['snippet'] = new_text
             else:
