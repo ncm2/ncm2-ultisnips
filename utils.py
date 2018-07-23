@@ -65,7 +65,7 @@ def match_formalize_from_lspitem(ctx, item, lspitem):
     ud['is_snippet'] = is_snippet
 
     if 'insertText' in lspitem:
-        item['word'] = ctx['base'] + lspitem['insertText']
+        item['word'] = lspitem['insertText']
     else:
         item['word'] = label
 
