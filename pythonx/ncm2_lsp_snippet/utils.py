@@ -7,10 +7,10 @@ def apply_additional_text_edits(completed):
     ud = completed['user_data']
     lspitem = ud.get('ncm2_lspitem', None)
     if lspitem:
-        apply_lsp_additional_text_edits(lspitem)
+        apply_lsp_additional_text_edits(ud, lspitem)
 
 
-def apply_lsp_additional_text_edits(lspitem):
+def apply_lsp_additional_text_edits(user_data, lspitem):
     import vim
     import json
 
@@ -18,11 +18,19 @@ def apply_lsp_additional_text_edits(lspitem):
 
     data = lspitem.get('data', None)
     if not additional_text_edits and data:
-        # for vim8 compatibility
-        vim.vars['_ncm2_lsp_snippet_tmp'] = json.dumps(lspitem)
-        expr = r"json_encode(LanguageClient_runSync('LanguageClient#completionItem_resolve', json_decode(g:_ncm2_lsp_snippet_tmp), {}))"
-        resolved = json.loads(vim.eval(expr))
-        additional_text_edits = resolved.get('additionalTextEdits', None)
+        if user_data.get('vim_lsp', None):
+            # https://github.com/ncm2/ncm2-vim-lsp
+            vim.vars['_ncm2_lsp_snippet_tmp'] = \
+                json.dumps([user_data, lspitem])
+            expr = r"json_encode(call('ncm2_vim_lsp#completionitem_resolve', json_decode(g:_ncm2_lsp_snippet_tmp)))"
+            resolved = json.loads(vim.eval(expr))
+            additional_text_edits = resolved.get('additionalTextEdits', None)
+        else:
+            # for vim8 compatibility
+            vim.vars['_ncm2_lsp_snippet_tmp'] = json.dumps(lspitem)
+            expr = r"json_encode(LanguageClient_runSync('LanguageClient#completionItem_resolve', json_decode(g:_ncm2_lsp_snippet_tmp), {}))"
+            resolved = json.loads(vim.eval(expr))
+            additional_text_edits = resolved.get('additionalTextEdits', None)
 
     if not additional_text_edits:
         return
