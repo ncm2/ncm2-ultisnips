@@ -67,17 +67,13 @@ endfunc
 
 " completion source
 
-let g:ncm2_ultisnips#source = get(g:, 'ncm2_ultisnips#source', {
+let g:ncm2_ultisnips#source = extend(get(g:, 'ncm2_ultisnips#source', {}), {
             \ 'name': 'ultisnips',
             \ 'priority': 7,
             \ 'mark': 'us',
             \ 'word_pattern': '\S+',
             \ 'on_complete': 'ncm2_ultisnips#on_complete',
-            \ })
-
-let g:ncm2_ultisnips#source = extend(g:ncm2_ultisnips#source,
-            \ get(g:, 'ncm2_ultisnips#source_override', {}),
-            \ 'force')
+            \ }, 'keep')
 
 func! ncm2_ultisnips#init()
     call ncm2#register_source(g:ncm2_ultisnips#source)
