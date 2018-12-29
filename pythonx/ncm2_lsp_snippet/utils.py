@@ -24,13 +24,15 @@ def apply_lsp_additional_text_edits(user_data, lspitem):
                 json.dumps([user_data, lspitem])
             expr = r"json_encode(call('ncm2_vim_lsp#completionitem_resolve', json_decode(g:_ncm2_lsp_snippet_tmp)))"
             resolved = json.loads(vim.eval(expr))
-            additional_text_edits = resolved.get('additionalTextEdits', None)
+            if resolved:
+                additional_text_edits = resolved.get('additionalTextEdits', None)
         else:
             # for vim8 compatibility
             vim.vars['_ncm2_lsp_snippet_tmp'] = json.dumps(lspitem)
             expr = r"json_encode(LanguageClient_runSync('LanguageClient#completionItem_resolve', json_decode(g:_ncm2_lsp_snippet_tmp), {}))"
             resolved = json.loads(vim.eval(expr))
-            additional_text_edits = resolved.get('additionalTextEdits', None)
+            if resolved:
+                additional_text_edits = resolved.get('additionalTextEdits', None)
 
     if not additional_text_edits:
         return
