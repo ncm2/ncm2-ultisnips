@@ -42,10 +42,34 @@ def apply_lsp_additional_text_edits(user_data, lspitem):
                        - e['range']['start']['character']])
 
     buf = vim.current.buffer
-    for edit in additional_text_edits:
+
+    i = 0
+    num = len(additional_text_edits)
+    while i < num:
+
+        edit = additional_text_edits[i]
         start = edit['range']['start']
         end = edit['range']['end']
         new_text = edit['newText']
+
+        # (LSP spec) However, it is possible that multiple edits have the same
+        # start position: multiple inserts, or any number of inserts followed by a
+        # single remove or replace edit. If multiple inserts have the same
+        # position, the order in the array defines the order in which the inserted
+        # strings appear in the resulting text.
+        #
+        # merge multiple inserts
+        while start == end and i+1 < num:
+            editn = additional_text_edits[i+1]
+            startn = editn['range']['start']
+            endn = editn['range']['end']
+            if startn == start:
+                new_text += editn['newText']
+                i += 1
+            else:
+                break
+
+
         lines = buf[start['line']: end['line'] + 1]
         prefix = lines[0][: start['character']]
         postfix = lines[-1][end['character']:]
@@ -57,6 +81,8 @@ def apply_lsp_additional_text_edits(user_data, lspitem):
         vim.vars['_ncm2_lsp_snippet_tmp'] = "auto edit: " + edit['newText']
         vim.command("echom g:_ncm2_lsp_snippet_tmp")
         del vim.vars['_ncm2_lsp_snippet_tmp']
+
+        i += 1
 
 
 def snippet_escape_text(txt):
