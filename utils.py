@@ -106,7 +106,8 @@ def match_formalize_from_lspitem(ctx, item, lspitem):
         item['word'] = label
 
     if is_snippet:
-        item['word'] = label
+        # snippet plugins does not work well with spaces
+        item['word'] = label.strip()
 
     ud['snippet'] = lspitem.get('insertText', label)
 
